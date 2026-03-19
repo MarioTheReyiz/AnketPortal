@@ -10,6 +10,22 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// 1. MSSQL Veri Tabaný Baðlantýsýný Servislere Ekleme
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// 2. ÖNCE Identity (Üyelik) Sistemini Servislere Ekleme
+builder.Services.AddIdentity<AppUser, AppRole>(options =>
+{
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequiredLength = 6;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireLowercase = false;
+})
+.AddEntityFrameworkStores<AppDbContext>()
+.AddDefaultTokenProviders();
+
+// 3. SONRA JWT ve Authentication Ayarlarýný Ekle (Böylece Identity'nin Cookie ayarýný eziyoruz)
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]!);
 
@@ -17,6 +33,7 @@ builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme; // Sistem genelinde varsayýlaný JWT yapar
 })
 .AddJwtBearer(options =>
 {
@@ -32,27 +49,13 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// 1. MSSQL Veri Tabaný Baðlantýsýný Servislere Ekleme
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-// 2. Identity (Üyelik) Sistemini Servislere Ekleme
-builder.Services.AddIdentity<AppUser, AppRole>(options =>
-{
-    options.Password.RequireNonAlphanumeric = false;
-    options.Password.RequiredLength = 6;
-    options.Password.RequireUppercase = false;
-    options.Password.RequireLowercase = false;
-})
-.AddEntityFrameworkStores<AppDbContext>()
-.AddDefaultTokenProviders();
-
 // Generic Repository'mizi sisteme tanýtýyoruz 
-// (AddScoped: Her HTTP isteði (Request) için bu sýnýftan yeni bir örnek oluþturulur ve o istek bitene kadar kullanýlýr)
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+
+// Swagger Ayarlarý
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo { Title = "Anket Portal API", Version = "v1" });

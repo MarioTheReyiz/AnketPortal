@@ -13,11 +13,16 @@ namespace AnketPortal.API.Controllers
     {
         private readonly IGenericRepository<Survey> _surveyRepo;
         private readonly IGenericRepository<Question> _questionRepo;
+        private readonly IGenericRepository<QuestionOption> _optionRepo; // Şıklar için eklendi
 
-        public SurveyController(IGenericRepository<Survey> surveyRepo, IGenericRepository<Question> questionRepo)
+        public SurveyController(
+            IGenericRepository<Survey> surveyRepo,
+            IGenericRepository<Question> questionRepo,
+            IGenericRepository<QuestionOption> optionRepo)
         {
             _surveyRepo = surveyRepo;
             _questionRepo = questionRepo;
+            _optionRepo = optionRepo;
         }
 
         // GENEL ARA YÜZ: Aktif anketleri listeler
@@ -77,7 +82,7 @@ namespace AnketPortal.API.Controllers
             var question = new Question
             {
                 Text = model.Text,
-                Type = (Models.Enums.QuestionType)model.Type,
+                Type = (Models.Enums.QuestionType)model.Type, // 1=Yazılı, 2=Çoktan Seçmeli
                 IsRequired = model.IsRequired,
                 SurveyId = model.Id, // DTO'daki Id, SurveyId olarak eşleşir
                 CreatedDate = DateTime.Now
@@ -87,6 +92,35 @@ namespace AnketPortal.API.Controllers
             await _questionRepo.SaveAsync();
 
             return Ok(new ResultDto { Status = true, Message = "Soru başarıyla eklendi." });
+        }
+
+        // YÖNETİCİ PANELİ: Soruya Şık (Seçenek) Ekleme (YENİ)
+        [Authorize(Roles = "Admin")]
+        [HttpPost("AddOption")]
+        public async Task<IActionResult> AddOption(OptionCreateDto model)
+        {
+            var option = new QuestionOption
+            {
+                OptionText = model.OptionText,
+                Order = model.Order,
+                QuestionId = model.QuestionId,
+                CreatedDate = DateTime.Now
+            };
+
+            await _optionRepo.AddAsync(option);
+            await _optionRepo.SaveAsync();
+
+            return Ok(new ResultDto { Status = true, Message = "Şık başarıyla eklendi." });
+        }
+
+        // YÖNETİCİ PANELİ: Anket Sonuçları (YENİ)
+        [Authorize(Roles = "Admin")]
+        [HttpGet("{id}/Results")]
+        public async Task<IActionResult> GetSurveyResults(int id)
+        {
+            // İleride Final projesinde burada istatistiksel hesaplamalar yapılacak
+            // Şimdilik sistemin uçtan uca çalışıp çalışmadığını gösteren bir mesaj dönüyoruz.
+            return Ok(new ResultDto { Status = true, Message = $"{id} numaralı anketin sonuçları derleniyor. (İstatistikler Final projesinde aktif edilecek)" });
         }
 
         // YÖNETİCİ PANELİ: Anket Silme (Soft Delete)
