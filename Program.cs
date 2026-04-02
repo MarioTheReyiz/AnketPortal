@@ -104,4 +104,51 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+// --- DATA SEEDING (SÝSTEM ÝLK AYAÐA KALKARKEN ÇALIÞACAK KODLAR) ---
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var userManager = services.GetRequiredService<UserManager<AppUser>>();
+        var roleManager = services.GetRequiredService<RoleManager<AppRole>>();
+
+        // 1. Sistemdeki temel rolleri oluþtur
+        string[] roleNames = { "SuperAdmin", "Admin", "User" };
+        foreach (var roleName in roleNames)
+        {
+            if (!await roleManager.RoleExistsAsync(roleName))
+            {
+                await roleManager.CreateAsync(new AppRole { Name = roleName });
+            }
+        }
+
+        // 2. Eðer veritabanýnda hiç SuperAdmin yoksa, ilk kurucu hesabý otomatik oluþtur
+        string adminEmail = "kurucu@anketportal.com";
+        var adminUser = await userManager.FindByEmailAsync(adminEmail);
+
+        if (adminUser == null)
+        {
+            adminUser = new AppUser
+            {
+                UserName = "superadmin",
+                Email = adminEmail,
+                FullName = "Sistem Kurucusu",
+                EmailConfirmed = true
+            };
+
+            // Þifreyi Admin123! olarak belirliyoruz
+            await userManager.CreateAsync(adminUser, "Admin123!");
+            await userManager.AddToRoleAsync(adminUser, "SuperAdmin");
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine("Veri tohumlama sýrasýnda hata oluþtu: " + ex.Message);
+    }
+}
+// --- DATA SEEDING SONU ---
+
+app.Run(); // Bu satýr zaten senin dosyanýn en altýnda var.
+
 app.Run();

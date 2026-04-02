@@ -1,6 +1,7 @@
 ﻿using AnketPortal.API.DTOs;
 using AnketPortal.API.Models;
 using AnketPortal.API.Repositories;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
@@ -29,13 +30,20 @@ namespace AnketPortal.API.Controllers
 
             if (result.Succeeded)
             {
-                if (!await _roleManager.RoleExistsAsync("User"))
+                // Sistemdeki 3 temel rolü kontrol et, yoksa veritabanında oluştur
+                string[] roles = { "SuperAdmin", "Admin", "User" };
+                foreach (var role in roles)
                 {
-                    await _roleManager.CreateAsync(new AppRole { Name = "User" });
+                    if (!await _roleManager.RoleExistsAsync(role))
+                    {
+                        await _roleManager.CreateAsync(new AppRole { Name = role });
+                    }
                 }
 
+                // Dışarıdan kaydolan HERKES istisnasız "User" olur!
                 await _userManager.AddToRoleAsync(user, "User");
-                return Ok(new ResultDto { Status = true, Message = "Kayıt Başarılı" });
+
+                return Ok(new ResultDto { Status = true, Message = "Kayıt Başarılı. Hesabınız standart 'User' yetkisiyle oluşturuldu." });
             }
             return BadRequest(new ResultDto { Status = false, Message = "Hata oluştu", Data = result.Errors });
         }
@@ -51,6 +59,26 @@ namespace AnketPortal.API.Controllers
                 return Ok(new ResultDto { Status = true, Message = "Giriş Başarılı", Data = token });
             }
             return Unauthorized(new ResultDto { Status = false, Message = "Kullanıcı adı veya şifre hatalı" });
+        }
+
+        // SÜPER ADMİN PANELİ: Başka Bir Kullanıcıya Yetki Verme
+        [Authorize(Roles = "SuperAdmin")] // DİKKAT: Sadece Süper Admin girebilir!
+        [HttpPost("AssignRole")]
+        public async Task<IActionResult> AssignRole(RoleAssignDto model)
+        {
+            var user = await _userManager.FindByNameAsync(model.UserName);
+            if (user == null) return NotFound(new ResultDto { Status = false, Message = "Kullanıcı bulunamadı." });
+
+            if (!await _roleManager.RoleExistsAsync(model.RoleName))
+                return BadRequest(new ResultDto { Status = false, Message = "Böyle bir rol sistemde yok." });
+
+            // Kullanıcıya yetkiyi ver
+            var result = await _userManager.AddToRoleAsync(user, model.RoleName);
+
+            if (result.Succeeded)
+                return Ok(new ResultDto { Status = true, Message = $"{user.UserName} adlı kullanıcıya '{model.RoleName}' yetkisi verildi." });
+
+            return BadRequest(new ResultDto { Status = false, Message = "Yetki verilemedi.", Data = result.Errors });
         }
     }
 }
