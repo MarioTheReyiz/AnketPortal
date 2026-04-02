@@ -29,5 +29,10 @@ namespace AnketPortal.API.Repositories
         {
             return await _context.SaveChangesAsync();
         }
+        // YENİ EKLENDİ: Metodun gövdesi
+        public IQueryable<T> AsQueryable()
+        {
+            return _dbSet.AsQueryable();
+        }
     }
 }

@@ -9,5 +9,7 @@
         void Delete(T entity);
         // Veri tabanına asıl kaydı yapacak olan metot:
         Task<int> SaveAsync();
+
+        IQueryable<T> AsQueryable();
     }
 }

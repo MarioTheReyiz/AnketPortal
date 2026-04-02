@@ -4,6 +4,7 @@ using AnketPortal.API.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
 
 namespace AnketPortal.API.Controllers
 {
@@ -24,6 +25,16 @@ namespace AnketPortal.API.Controllers
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
+            // 1. KONTROL: Kullanıcı bu anketi daha önce çözmüş mü?
+            bool hasAnswered = await _answerRepo.AsQueryable()
+                .AnyAsync(a => a.AppUserId == userId && a.SurveyId == model.SurveyId);
+
+            if (hasAnswered)
+            {
+                return BadRequest(new ResultDto { Status = false, Message = "Bu anketi zaten cevapladınız. Bir ankete sadece bir kez katılabilirsiniz." });
+            }
+
+            // 2. KAYIT: Eğer çözmediyse cevapları veritabanına işle
             foreach (var item in model.Answers)
             {
                 var answer = new SurveyAnswer
@@ -39,7 +50,7 @@ namespace AnketPortal.API.Controllers
             }
 
             await _answerRepo.SaveAsync();
-            return Ok(new ResultDto { Status = true, Message = "Cevaplarınız başarıyla kaydedildi." });
+            return Ok(new ResultDto { Status = true, Message = "Cevaplarınız başarıyla kaydedildi. Katılımınız için teşekkürler!" });
         }
     }
 }

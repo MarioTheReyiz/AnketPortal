@@ -4,6 +4,7 @@ using AnketPortal.API.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
 
 namespace AnketPortal.API.Controllers
 {
@@ -40,16 +41,24 @@ namespace AnketPortal.API.Controllers
             return Ok(result);
         }
 
-        // GENEL ARA YÜZ: Anket detayını getirir
+        // GENEL ARA YÜZ: Anket detayını (Sorular ve Şıklarla Birlikte) getirir
         [HttpGet("{id}")]
         public async Task<IActionResult> GetSurveyById(int id)
         {
-            var survey = await _surveyRepo.GetByIdAsync(id);
+            // ESKİ HALİ: Sadece anketi getiriyordu.
+            // var survey = await _surveyRepo.GetByIdAsync(id);
+
+            // YENİ HALİ: Anketi, Sorularını ve o Soruların Şıklarını (Include) birleştirerek getirir.
+            var survey = await _surveyRepo.AsQueryable()
+                .Include(s => s.Questions)
+                    .ThenInclude(q => q.Options)
+                .FirstOrDefaultAsync(s => s.Id == id);
+
             if (survey == null || !survey.IsActive)
                 return NotFound(new ResultDto { Status = false, Message = "Anket bulunamadı." });
 
             return Ok(survey);
-        }
+        } 
 
         // YÖNETİCİ PANELİ: Yeni Anket Oluşturma
         [Authorize(Roles = "Admin")]
