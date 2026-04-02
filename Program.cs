@@ -147,8 +147,4 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine("Veri tohumlama sýrasýnda hata oluþtu: " + ex.Message);
     }
 }
-// --- DATA SEEDING SONU ---
-
-app.Run(); // Bu satýr zaten senin dosyanýn en altýnda var.
-
 app.Run();
