@@ -4,7 +4,7 @@
     {
         public int Id { get; set; }
         public string Text { get; set; } = string.Empty;
-        public int Type { get; set; } // Enum değeri
+        public int Type { get; set; } 
         public bool IsRequired { get; set; }
         public List<OptionDto> Options { get; set; } = new();
     }

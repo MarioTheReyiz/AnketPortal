@@ -16,8 +16,8 @@ namespace AnketPortal.API.DTOs
         [Required(ErrorMessage = "Hangi soruya (QuestionId) cevap verdiğinizi belirtmek zorundasınız.")]
         public int QuestionId { get; set; }
 
-        public string? TextAnswer { get; set; } // Metin soruları için (Boş bırakılabilir)
+        public string? TextAnswer { get; set; } 
 
-        public int? SelectedOptionId { get; set; } // Çoktan seçmeli sorular için (Boş bırakılabilir)
+        public int? SelectedOptionId { get; set; } //
     }
 }

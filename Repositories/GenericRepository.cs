@@ -24,12 +24,12 @@ namespace AnketPortal.API.Repositories
 
         public void Delete(T entity) => _dbSet.Remove(entity);
 
-        // Bu metot çağrılmadan SQL tarafında hiçbir değişiklik kalıcı olmaz.
+
         public async Task<int> SaveAsync()
         {
             return await _context.SaveChangesAsync();
         }
-        // YENİ EKLENDİ: Metodun gövdesi
+
         public IQueryable<T> AsQueryable()
         {
             return _dbSet.AsQueryable();

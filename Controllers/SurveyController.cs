@@ -26,7 +26,7 @@ namespace AnketPortal.API.Controllers
             _optionRepo = optionRepo;
         }
 
-        // GENEL ARA YÜZ: Aktif anketleri listeler (Arama özellikli)
+        //Aktif Anketleri Listeleme ve Arama
         [HttpGet]
         public async Task<IActionResult> GetSurveys(string? search = null)
         {
@@ -49,7 +49,7 @@ namespace AnketPortal.API.Controllers
             return Ok(result);
         }
 
-        // GENEL ARA YÜZ: Anket detayını (Sorular ve Şıklarla Birlikte) getirir
+        //Anket Detaylarını Getirme
         [HttpGet("{id}")]
         public async Task<IActionResult> GetSurveyById(int id)
         {
@@ -64,7 +64,7 @@ namespace AnketPortal.API.Controllers
             return Ok(survey);
         }
 
-        // YÖNETİCİ PANELİ: Yeni Anket Oluşturma
+        //  Yeni Anket Oluşturma
         [Authorize(Roles = "Admin,SuperAdmin")]
         [HttpPost]
         public async Task<IActionResult> CreateSurvey(SurveyCreateDto model)
@@ -87,7 +87,7 @@ namespace AnketPortal.API.Controllers
             return Ok(new ResultDto { Status = true, Message = "Anket başarıyla oluşturuldu." });
         }
 
-        // YÖNETİCİ PANELİ: Anket Güncelleme (YENİ EKLENDİ)
+        // Anket Güncelleme
         [Authorize(Roles = "Admin,SuperAdmin")]
         [HttpPut]
         public async Task<IActionResult> UpdateSurvey(SurveyDto model)
@@ -104,7 +104,7 @@ namespace AnketPortal.API.Controllers
             return Ok(new ResultDto { Status = true, Message = "Anket başarıyla güncellendi." });
         }
 
-        // YÖNETİCİ PANELİ: Ankete Soru Ekleme
+        // Ankete Soru Ekleme
         [Authorize(Roles = "Admin,SuperAdmin")]
         [HttpPost("AddQuestion")]
         public async Task<IActionResult> AddQuestion(QuestionDto model)
@@ -124,7 +124,7 @@ namespace AnketPortal.API.Controllers
             return Ok(new ResultDto { Status = true, Message = "Soru başarıyla eklendi." });
         }
 
-        // YÖNETİCİ PANELİ: Soruya Şık (Seçenek) Ekleme
+        //  Soruya Şık  Ekleme
         [Authorize(Roles = "Admin,SuperAdmin")]
         [HttpPost("AddOption")]
         public async Task<IActionResult> AddOption(OptionCreateDto model)
@@ -143,7 +143,7 @@ namespace AnketPortal.API.Controllers
             return Ok(new ResultDto { Status = true, Message = "Şık başarıyla eklendi." });
         }
 
-        // YÖNETİCİ PANELİ: Anket Sonuçları
+        // Anket Sonuçları
         [Authorize(Roles = "Admin,SuperAdmin")]
         [HttpGet("{id}/Results")]
         public async Task<IActionResult> GetSurveyResults(int id)
@@ -151,7 +151,7 @@ namespace AnketPortal.API.Controllers
             return Ok(new ResultDto { Status = true, Message = $"{id} numaralı anketin sonuçları derleniyor. (İstatistikler Final projesinde aktif edilecek)" });
         }
 
-        // YÖNETİCİ PANELİ: Anket Silme (Soft Delete)
+        //  Anket Silme (Soft Delete)
         [Authorize(Roles = "Admin,SuperAdmin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteSurvey(int id)
@@ -164,6 +164,22 @@ namespace AnketPortal.API.Controllers
             await _surveyRepo.SaveAsync();
 
             return Ok(new ResultDto { Status = true, Message = "Anket başarıyla silindi (pasife alındı)." });
+        }
+
+        // Veritabanından fiziksel olarak sil (Hard Delete)
+        [Authorize(Roles = "SuperAdmin")]
+        [HttpDelete("{id}/HardDelete")]
+        public async Task<IActionResult> HardDeleteSurvey(int id)
+        {
+            var survey = await _surveyRepo.GetByIdAsync(id);
+            if (survey == null)
+                return NotFound(new ResultDto { Status = false, Message = "Silinecek anket bulunamadı." });
+
+            
+            _surveyRepo.Delete(survey);
+            await _surveyRepo.SaveAsync();
+
+            return Ok(new ResultDto { Status = true, Message = "Anket ve ona bağlı tüm veriler veritabanından kalıcı olarak silindi!" });
         }
     }
 }

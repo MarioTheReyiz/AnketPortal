@@ -6,6 +6,6 @@
         public string Title { get; set; } = string.Empty;
         public string? Description { get; set; }
         public DateTime CreatedDate { get; set; }
-        public int QuestionCount { get; set; } // Sadece soru sayısını döndürebiliriz
+        public int QuestionCount { get; set; } 
     }
 }

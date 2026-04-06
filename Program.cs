@@ -10,11 +10,11 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. MSSQL Veri Tabaný Baðlantýsýný Servislere Ekleme
+//Veritabaný Baðlantýsý
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// 2. ÖNCE Identity (Üyelik) Sistemini Servislere Ekleme
+//Identity Ayarlarý
 builder.Services.AddIdentity<AppUser, AppRole>(options =>
 {
     options.Password.RequireNonAlphanumeric = false;
@@ -25,7 +25,7 @@ builder.Services.AddIdentity<AppUser, AppRole>(options =>
 .AddEntityFrameworkStores<AppDbContext>()
 .AddDefaultTokenProviders();
 
-// 3. SONRA JWT ve Authentication Ayarlarýný Ekle
+// JWT ve Authentication 
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]!);
 
@@ -49,12 +49,12 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// Generic Repository'mizi sisteme tanýtýyoruz 
+// Generic Repository
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddControllers();
 
-// --- CORS AYARLARI (MVC AJAX Ýsteklerine Ýzin Verme) ---
+// CORS Ayarlarý
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", b => b.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
@@ -95,7 +95,6 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -104,7 +103,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-// DÝKKAT: CORS Yetkilendirmeden ÖNCE çalýþmalý!
+// CORS
 app.UseCors("AllowAll");
 
 // Kimlik doðrulama
@@ -113,7 +112,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// --- DATA SEEDING ---
+// Oto Admin
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -122,7 +121,7 @@ using (var scope = app.Services.CreateScope())
         var userManager = services.GetRequiredService<UserManager<AppUser>>();
         var roleManager = services.GetRequiredService<RoleManager<AppRole>>();
 
-        // 1. Sistemdeki temel rolleri oluþtur
+        // Temel roller
         string[] roleNames = { "SuperAdmin", "Admin", "User" };
         foreach (var roleName in roleNames)
         {
@@ -132,7 +131,7 @@ using (var scope = app.Services.CreateScope())
             }
         }
 
-        // 2. Kurucu hesabý otomatik oluþtur
+        // Otomatik Kurucu hesabý 
         string adminEmail = "kurucu@anketportal.com";
         var adminUser = await userManager.FindByEmailAsync(adminEmail);
 

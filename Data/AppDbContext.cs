@@ -17,17 +17,17 @@ namespace AnketPortal.API.Data
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
-            // Identity tablolarının (kullanıcı, rol vb.) düzgün oluşması için bu satır HAYATİDİR, asla silme.
+            
             base.OnModelCreating(builder);
 
-            // 1. Kural: Anket silindiğinde ona bağlı cevapları otomatik silmeye çalışma (NoAction)
+            // Anket silindiğinde ona bağlı cevapları otomatik silme
             builder.Entity<SurveyAnswer>()
                 .HasOne(sa => sa.Survey)
                 .WithMany(s => s.Answers)
                 .HasForeignKey(sa => sa.SurveyId)
                 .OnDelete(DeleteBehavior.NoAction);
 
-            // 2. Kural: Soru silindiğinde ona bağlı cevapları otomatik silmeye çalışma (NoAction)
+            // Soru silindiğinde ona bağlı cevapları otomatik silme
             builder.Entity<SurveyAnswer>()
                 .HasOne(sa => sa.Question)
                 .WithMany()

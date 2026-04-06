@@ -22,7 +22,7 @@ namespace AnketPortal.API.Controllers
             _tokenService = tokenService;
         }
 
-        [HttpPost("Register")]
+        [HttpPost("Register")]  // Kayıt API'si
         public async Task<IActionResult> Register(RegisterDto model)
         {
             var user = new AppUser { UserName = model.UserName, Email = model.Email, FullName = model.FullName };
@@ -30,7 +30,7 @@ namespace AnketPortal.API.Controllers
 
             if (result.Succeeded)
             {
-                // Sistemdeki 3 temel rolü kontrol et, yoksa veritabanında oluştur
+                
                 string[] roles = { "SuperAdmin", "Admin", "User" };
                 foreach (var role in roles)
                 {
@@ -40,7 +40,7 @@ namespace AnketPortal.API.Controllers
                     }
                 }
 
-                // Dışarıdan kaydolan HERKES istisnasız "User" olur!
+                // İlk Kayıt Herkes User Olarak Başlar
                 await _userManager.AddToRoleAsync(user, "User");
 
                 return Ok(new ResultDto { Status = true, Message = "Kayıt Başarılı. Hesabınız standart 'User' yetkisiyle oluşturuldu." });
@@ -48,7 +48,7 @@ namespace AnketPortal.API.Controllers
             return BadRequest(new ResultDto { Status = false, Message = "Hata oluştu", Data = result.Errors });
         }
 
-        [HttpPost("Login")]
+        [HttpPost("Login")] // Giriş API'si
         public async Task<IActionResult> Login(LoginDto model)
         {
             var user = await _userManager.FindByNameAsync(model.UserName);
@@ -61,8 +61,8 @@ namespace AnketPortal.API.Controllers
             return Unauthorized(new ResultDto { Status = false, Message = "Kullanıcı adı veya şifre hatalı" });
         }
 
-        // SÜPER ADMİN PANELİ: Başka Bir Kullanıcıya Yetki Verme
-        [Authorize(Roles = "SuperAdmin")] // DİKKAT: Sadece Süper Admin girebilir!
+        
+        [Authorize(Roles = "SuperAdmin")] // Yetki Atama API'si
         [HttpPost("AssignRole")]
         public async Task<IActionResult> AssignRole(RoleAssignDto model)
         {
