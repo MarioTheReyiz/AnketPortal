@@ -25,7 +25,7 @@ builder.Services.AddIdentity<AppUser, AppRole>(options =>
 .AddEntityFrameworkStores<AppDbContext>()
 .AddDefaultTokenProviders();
 
-// 3. SONRA JWT ve Authentication Ayarlarýný Ekle (Böylece Identity'nin Cookie ayarýný eziyoruz)
+// 3. SONRA JWT ve Authentication Ayarlarýný Ekle
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]!);
 
@@ -33,7 +33,7 @@ builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme; // Sistem genelinde varsayýlaný JWT yapar
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
 })
 .AddJwtBearer(options =>
 {
@@ -53,6 +53,13 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddControllers();
+
+// --- CORS AYARLARI (MVC AJAX Ýsteklerine Ýzin Verme) ---
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", b => b.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+});
+
 builder.Services.AddEndpointsApiExplorer();
 
 // Swagger Ayarlarý
@@ -60,7 +67,6 @@ builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo { Title = "Anket Portal API", Version = "v1" });
 
-    // Burasý önemli: 'OpenApiSecurityScheme' kullanýyoruz
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -98,13 +104,16 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-// Kimlik doðrulama (Sýralama önemlidir: Önce Authentication, sonra Authorization)
+// DÝKKAT: CORS Yetkilendirmeden ÖNCE çalýþmalý!
+app.UseCors("AllowAll");
+
+// Kimlik doðrulama
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 
-// --- DATA SEEDING (SÝSTEM ÝLK AYAÐA KALKARKEN ÇALIÞACAK KODLAR) ---
+// --- DATA SEEDING ---
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -123,7 +132,7 @@ using (var scope = app.Services.CreateScope())
             }
         }
 
-        // 2. Eðer veritabanýnda hiç SuperAdmin yoksa, ilk kurucu hesabý otomatik oluþtur
+        // 2. Kurucu hesabý otomatik oluþtur
         string adminEmail = "kurucu@anketportal.com";
         var adminUser = await userManager.FindByEmailAsync(adminEmail);
 
@@ -137,7 +146,6 @@ using (var scope = app.Services.CreateScope())
                 EmailConfirmed = true
             };
 
-            // Þifreyi Admin123! olarak belirliyoruz
             await userManager.CreateAsync(adminUser, "Admin123!");
             await userManager.AddToRoleAsync(adminUser, "SuperAdmin");
         }

@@ -1,10 +1,15 @@
-﻿namespace AnketPortal.API.DTOs
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace AnketPortal.API.DTOs
 {
     public class SurveyCreateDto
     {
+        [Required(ErrorMessage = "Anket başlığı zorunludur.")]
         public string Title { get; set; } = string.Empty;
+
         public string? Description { get; set; }
+
+        [Required]
         public DateTime EndDate { get; set; }
-        // Eklenirken ID veya oluşturulma tarihi istemiyoruz, sadece gerekli veriler!
     }
 }
