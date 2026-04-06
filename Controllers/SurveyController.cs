@@ -61,7 +61,7 @@ namespace AnketPortal.API.Controllers
         } 
 
         // YÖNETİCİ PANELİ: Yeni Anket Oluşturma
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
         [HttpPost]
         public async Task<IActionResult> CreateSurvey(SurveyCreateDto model)
         {
@@ -84,7 +84,7 @@ namespace AnketPortal.API.Controllers
         }
 
         // YÖNETİCİ PANELİ: Ankete Soru Ekleme
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
         [HttpPost("AddQuestion")]
         public async Task<IActionResult> AddQuestion(QuestionDto model)
         {
@@ -104,7 +104,7 @@ namespace AnketPortal.API.Controllers
         }
 
         // YÖNETİCİ PANELİ: Soruya Şık (Seçenek) Ekleme (YENİ)
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
         [HttpPost("AddOption")]
         public async Task<IActionResult> AddOption(OptionCreateDto model)
         {
@@ -123,7 +123,7 @@ namespace AnketPortal.API.Controllers
         }
 
         // YÖNETİCİ PANELİ: Anket Sonuçları (YENİ)
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
         [HttpGet("{id}/Results")]
         public async Task<IActionResult> GetSurveyResults(int id)
         {
@@ -133,7 +133,7 @@ namespace AnketPortal.API.Controllers
         }
 
         // YÖNETİCİ PANELİ: Anket Silme (Soft Delete)
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteSurvey(int id)
         {
