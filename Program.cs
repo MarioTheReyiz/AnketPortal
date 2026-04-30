@@ -57,7 +57,12 @@ builder.Services.AddControllers();
 // CORS Ayarlarý
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", b => b.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+    options.AddPolicy("AllowAll", builder =>
+    {
+        builder.AllowAnyOrigin()
+               .AllowAnyMethod()
+               .AllowAnyHeader();
+    });
 });
 
 builder.Services.AddEndpointsApiExplorer();
@@ -94,6 +99,8 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 var app = builder.Build();
+
+
 
 if (app.Environment.IsDevelopment())
 {
