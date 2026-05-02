@@ -10,11 +10,11 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-//Veritabaný Baðlantýsý
+// --- 1. Veritabaný Baðlantýsý ---
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-//Identity Ayarlarý
+// --- 2. Identity Ayarlarý ---
 builder.Services.AddIdentity<AppUser, AppRole>(options =>
 {
     options.Password.RequireNonAlphanumeric = false;
@@ -25,7 +25,7 @@ builder.Services.AddIdentity<AppUser, AppRole>(options =>
 .AddEntityFrameworkStores<AppDbContext>()
 .AddDefaultTokenProviders();
 
-// JWT ve Authentication 
+// --- 3. JWT ve Authentication ---
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]!);
 
@@ -49,25 +49,25 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// Generic Repository
+// --- 4. Baðýmlýlýk Enjeksiyonlarý (DI) ---
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddControllers();
 
-// CORS Ayarlarý
+// --- 5. CORS AYARLARI (ÖNEMLÝ: Politika burada tanýmlanýr) ---
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", builder =>
+    options.AddPolicy("AllowAll", policy =>
     {
-        builder.AllowAnyOrigin()
-               .AllowAnyMethod()
-               .AllowAnyHeader();
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
     });
 });
 
 builder.Services.AddEndpointsApiExplorer();
 
-// Swagger Ayarlarý
+// --- 6. Swagger Ayarlarý ---
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo { Title = "Anket Portal API", Version = "v1" });
@@ -98,9 +98,10 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+// =================================================================
+// PÝPELINE (MÝDDLEWARE) SIRALAMASI - BURASI ÇOK ÖNEMLÝ
+// =================================================================
 var app = builder.Build();
-
-
 
 if (app.Environment.IsDevelopment())
 {
@@ -110,16 +111,24 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-// CORS
+// 1. Önce Routing (Yönlendirme) çalýþmalý! (Bunu unutmuþtuk)
+app.UseRouting();
+
+// 2. Routing'den hemen sonra CORS devreye girmeli!
 app.UseCors("AllowAll");
 
-// Kimlik doðrulama
+// 3. Kimlik Doðrulama (Cors'tan sonra gelmeli)
 app.UseAuthentication();
+
+// 4. Yetkilendirme
 app.UseAuthorization();
 
+// 5. Controller'larý Eþle
 app.MapControllers();
 
-// Oto Admin
+// =================================================================
+// OTO ADMÝN (VERÝ TOHUMLAMA)
+// =================================================================
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -161,4 +170,5 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine("Veri tohumlama sýrasýnda hata oluþtu: " + ex.Message);
     }
 }
+
 app.Run();
